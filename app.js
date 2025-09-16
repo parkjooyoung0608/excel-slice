@@ -55,22 +55,30 @@ fileInput.addEventListener("change", async (e) => {
 // 추출 및 화면 표시
 extractBtn.addEventListener("click", () => {
   if (!workbookData) return alert("먼저 엑셀 파일을 업로드하세요.");
-  const targetId = idInput.value.trim();
-  if (!targetId) return alert("회원코드를 입력해주세요.");
 
   const firstSheetName = workbookData.SheetNames[0];
   const worksheet = workbookData.Sheets[firstSheetName];
   const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-  filteredData = jsonData.filter((row) => row["회원코드"] == targetId);
+  // 회원코드별 개수 세기
+  const codeCount = {};
+  jsonData.forEach((row) => {
+    const code = row["회원코드"];
+    if (code) {
+      codeCount[code] = (codeCount[code] || 0) + 1;
+    }
+  });
+
+  // 2개 이상인 회원코드만 필터링
+  filteredData = jsonData.filter((row) => codeCount[row["회원코드"]] >= 2);
 
   renderTable(filteredData);
 
   if (filteredData.length === 0) {
-    alert(`회원코드 ${targetId} 값을 찾을 수 없습니다.`);
+    alert("중복된 회원코드 데이터를 찾을 수 없습니다.");
     downloadBtn.disabled = true;
   } else {
-    alert(`${filteredData.length}개의 행이 추출되었습니다.`);
+    alert(`${filteredData.length}개의 중복 행이 추출되었습니다.`);
     downloadBtn.disabled = false;
   }
 });

@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>엑셀 특정 ID 추출 (토스 느낌 UI)</title>
+    <title>엑셀 특정 ID 추출</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
     <style>
       /* 기본 스타일 */
@@ -151,8 +151,6 @@
   </head>
   <body>
     <div class="card">
-      <h1>엑셀 회원코드 추출</h1>
-
       <div class="input-group">
         <input type="file" id="fileInput" accept=".xlsx, .xls" />
       </div>
@@ -162,7 +160,6 @@
       </div>
 
       <div class="input-group">
-        <input type="text" id="idInput" placeholder="회원코드 입력" />
         <button id="extractBtn">추출</button>
         <button id="downloadBtn" disabled>엑셀 다운로드</button>
       </div>
