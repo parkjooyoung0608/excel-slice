@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>엑셀 특정 ID 추출 (토스 느낌 UI)</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+      /* 기본 스타일 */
+      body {
+        font-family: "Noto Sans KR", sans-serif;
+        font-size: 12px;
+        background-color: #f5f6fa;
+        display: flex;
+        justify-content: center;
+        padding: 40px 20px;
+      }
+
+      /* 카드 컨테이너 */
+      .card {
+        background-color: #fff;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        padding: 15px;
+        width: 100%;
+        max-width: 1200px;
+      }
+
+      h1 {
+        margin-bottom: 20px;
+        font-size: 24px;
+        color: #1f1f1f;
+        text-align: center;
+      }
+
+      /* 입력 & 버튼 그룹 */
+      .input-group {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      input[type="file"] {
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #dcdcdc;
+        flex: 1;
+      }
+
+      input[type="text"] {
+        flex: 1;
+        padding: 10px 12px;
+        border-radius: 8px;
+        border: 1px solid #dcdcdc;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 10px 16px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.2s;
+      }
+
+      button#extractBtn {
+        background-color: #4f7fd1;
+        color: white;
+      }
+      button#extractBtn:hover {
+        background-color: #3a65b0;
+      }
+
+      button#downloadBtn {
+        background-color: #f0f0f0;
+        color: #555;
+      }
+      button#downloadBtn:enabled {
+        background-color: #4f7fd1;
+        color: white;
+      }
+      button#downloadBtn:hover:enabled {
+        background-color: #3a65b0;
+      }
+
+      /* 프로그레스 바 */
+      #progressContainer {
+        width: 100%;
+        background-color: #e0e0e0;
+        height: 20px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 20px;
+      }
+
+      #progressBar {
+        width: 0%;
+        height: 100%;
+        background-color: #4f7fd1;
+        text-align: center;
+        color: white;
+        line-height: 20px;
+        font-size: 12px;
+        transition: width 0.2s ease;
+      }
+
+      /* 결과 테이블 */
+      .result {
+        width: 100vw;
+        overflow: hidden;
+      }
+
+      table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-top: 20px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      th,
+      td {
+        padding: 12px 8px;
+        text-align: center;
+        border: 1px solid #e0e0e0;
+      }
+
+      th {
+        background-color: #f9fafc;
+        color: #333;
+        font-weight: 600;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f7f8fa;
+      }
+
+      /* 반응형 */
+      @media (max-width: 500px) {
+        .input-group {
+          flex-direction: column;
+        }
+        input,
+        button,
+        table {
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>엑셀 회원코드 추출</h1>
+
+      <div class="input-group">
+        <input type="file" id="fileInput" accept=".xlsx, .xls" />
+      </div>
+
+      <div id="progressContainer">
+        <div id="progressBar">0%</div>
+      </div>
+
+      <div class="input-group">
+        <input type="text" id="idInput" placeholder="회원코드 입력" />
+        <button id="extractBtn">추출</button>
+        <button id="downloadBtn" disabled>엑셀 다운로드</button>
+      </div>
+
+      <div id="result"></div>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
