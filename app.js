@@ -62,6 +62,7 @@ extractBtn.addEventListener("click", () => {
   const worksheet = workbookData.Sheets[firstSheetName];
   const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
+  // 회원코드 중복 카운트
   const codeCount = {};
   jsonData.forEach((row) => {
     const code = row["회원코드"];
@@ -106,6 +107,7 @@ transformBtn.addEventListener("click", () => {
   const worksheet = workbookData.Sheets[firstSheetName];
   const jsonData = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
+  // 회원코드별 그룹화
   const grouped = {};
   jsonData.forEach((row) => {
     const code = row["회원코드"];
@@ -114,32 +116,59 @@ transformBtn.addEventListener("click", () => {
     grouped[code].push(row);
   });
 
-  transformedData = Object.entries(grouped).map(([code, rows]) => {
+  transformedData = [];
+
+  Object.entries(grouped).forEach(([code, rows]) => {
+    // 첫 주문일자 기준 정렬
     rows.sort(
       (a, b) => new Date(a["첫 주문일자"]) - new Date(b["첫 주문일자"])
     );
-    const base = { 회원코드: code };
-    rows.forEach((row, idx) => {
-      if (idx === 0) {
-        base["주문자 E-Mail"] = row["주문자 E-Mail"];
-        base["주문자명"] = row["주문자명"];
-        base["주문자 연락처"] = row["주문자 연락처"];
-        base["첫주문_주문일자"] = formatExcelDate(row["첫 주문일자"]);
-        base["첫주문_옵션"] = row["옵션정보"];
-        base["첫주문_수량"] = row["수량"];
+
+    // 날짜별 그룹화
+    const dateGroups = {};
+    rows.forEach((row) => {
+      const date = formatExcelDate(row["첫 주문일자"]);
+      if (!dateGroups[date]) dateGroups[date] = [];
+      dateGroups[date].push(row);
+    });
+
+    let first = true;
+    let baseRows = []; // 첫구매 세로용
+    let purchaseIndex = 1; // 재구매 열 인덱스
+
+    Object.entries(dateGroups).forEach(([date, orders]) => {
+      if (first) {
+        // 첫구매 → 세로로 옵션 여러 줄
+        orders.forEach((order, idx) => {
+          const rowEntry = {
+            회원코드: idx === 0 ? code : "",
+            "주문자 E-Mail": idx === 0 ? order["주문자 E-Mail"] : "",
+            주문자명: idx === 0 ? order["주문자명"] : "",
+            "주문자 연락처": idx === 0 ? order["주문자 연락처"] : "",
+            첫주문_주문일자: date,
+            첫주문_옵션: order["옵션정보"],
+            첫주문_수량: order["수량"],
+          };
+          baseRows.push(rowEntry);
+        });
+        first = false;
       } else {
-        if (row["첫 주문일자"] || row["옵션정보"] || row["수량"]) {
-          base[`재구매${idx}_주문일자`] = formatExcelDate(row["첫 주문일자"]);
-          base[`재구매${idx}_옵션`] = row["옵션정보"];
-          base[`재구매${idx}_수량`] = row["수량"];
-        }
+        // 재구매 → 열로 확장, 같은 날짜 옵션은 세로 유지
+        orders.forEach((order, idx) => {
+          if (!baseRows[idx]) baseRows[idx] = { 회원코드: "" }; // 기존 행 없으면 새로 생성
+          baseRows[idx][`재구매${purchaseIndex}_주문일자`] =
+            idx === 0 ? date : "";
+          baseRows[idx][`재구매${purchaseIndex}_옵션`] = order["옵션정보"];
+          baseRows[idx][`재구매${purchaseIndex}_수량`] = order["수량"];
+        });
+        purchaseIndex++; // 다음 재구매 열로 이동
       }
     });
-    return base;
+
+    transformedData.push(...baseRows);
   });
 
   renderTable(transformedData);
-
   if (transformedData.length === 0) {
     alert("데이터를 변환할 수 없습니다.");
     downloadTransformBtn.disabled = true;
@@ -154,8 +183,39 @@ transformBtn.addEventListener("click", () => {
 // 가로 변환 다운로드
 downloadTransformBtn.addEventListener("click", () => {
   if (!lastRenderedData || lastRenderedData.length === 0) return;
+
   const newWorkbook = XLSX.utils.book_new();
   const newWorksheet = XLSX.utils.json_to_sheet(lastRenderedData);
+
+  // 병합 범위 생성
+  const merges = [];
+  let startRow = 1; // 시트는 1부터 시작, JSON -> sheet 변환 시 row 0은 헤더
+  while (startRow <= lastRenderedData.length) {
+    const code = lastRenderedData[startRow - 1]["회원코드"];
+    if (!code) {
+      startRow++;
+      continue;
+    }
+
+    // 같은 회원코드가 몇 행인지 세기
+    let endRow = startRow;
+    while (
+      endRow < lastRenderedData.length &&
+      lastRenderedData[endRow]["회원코드"] === ""
+    ) {
+      endRow++;
+    }
+
+    // A~D 열 병합 (회원코드~주문자 연락처)
+    merges.push({ s: { r: startRow, c: 0 }, e: { r: endRow, c: 0 } }); // 회원코드
+    merges.push({ s: { r: startRow, c: 1 }, e: { r: endRow, c: 1 } }); // 이메일
+    merges.push({ s: { r: startRow, c: 2 }, e: { r: endRow, c: 2 } }); // 주문자명
+    merges.push({ s: { r: startRow, c: 3 }, e: { r: endRow, c: 3 } }); // 연락처
+
+    startRow = endRow + 1;
+  }
+
+  newWorksheet["!merges"] = merges;
   XLSX.utils.book_append_sheet(newWorkbook, newWorksheet, "Transformed");
   XLSX.writeFile(newWorkbook, "transformed_result.xlsx");
 });
