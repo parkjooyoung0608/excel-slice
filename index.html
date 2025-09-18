@@ -64,23 +64,13 @@
         transition: all 0.2s;
       }
 
-      button#extractBtn {
+      button#extractBtn,
+      button#transformBtn {
         background-color: #4f7fd1;
         color: white;
       }
-      button#extractBtn:hover {
-        background-color: #3a65b0;
-      }
-
-      button#downloadBtn {
-        background-color: #f0f0f0;
-        color: #555;
-      }
-      button#downloadBtn:enabled {
-        background-color: #4f7fd1;
-        color: white;
-      }
-      button#downloadBtn:hover:enabled {
+      button#extractBtn:hover,
+      button#transformBtn:hover {
         background-color: #3a65b0;
       }
 
@@ -160,8 +150,13 @@
       </div>
 
       <div class="input-group">
-        <button id="extractBtn">추출</button>
-        <button id="downloadBtn" disabled>엑셀 다운로드</button>
+        <button id="extractBtn">중복 추출</button>
+        <button id="downloadBtn" disabled>중복 결과 다운로드</button>
+      </div>
+
+      <div class="input-group">
+        <button id="transformBtn">가로 변환 추출</button>
+        <button id="downloadTransformBtn" disabled>가로 변환 다운로드</button>
       </div>
 
       <div id="result"></div>
